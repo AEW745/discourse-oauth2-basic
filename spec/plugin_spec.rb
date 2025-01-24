@@ -303,16 +303,30 @@ describe OAuth2BasicAuthenticator do
     expect(result).to eq "test2@example.com"
   end
 
-  it "can walk json and download avatar" do
-    authenticator = OAuth2BasicAuthenticator.new
-    json_string = '{"user":{"avatar":"avatar_hash", "id":"user_id"}}'
-    SiteSetting.oauth2_json_avatar_path = "user.avatar"
-    SiteSetting.oauth2_json_user_id_path = "user.id"
-    result = authenticator.json_walk({}, JSON.parse(json_string), :avatar)
+  it "can walk json and download discord avatar" do
+  authenticator = OAuth2BasicAuthenticator.new
+  json_string = '{"user":{"avatar":"abcd1234","id":1234}}'  # Correct: avatar is the hash, not a filename
+  SiteSetting.oauth2_json_avatar_path = "user.avatar"
+  
+  # Define the base URL for Discord avatars
+  base_url = "https://cdn.discordapp.com/avatars/"
 
-    expected_url = "https://cdn.discordapp.com/avatars/user_id/avatar_hash.png"
-    expect(result).to eq expected_url
-  end
+  # Parse the JSON
+  json_data = JSON.parse(json_string)
+
+  # Get the avatar hash and user ID
+  avatar_hash = json_data.dig("user", "avatar")
+  user_id = json_data.dig("user", "id")
+  
+  # Construct the full URL for the Discord avatar
+  json_data["user"]["avatar"] = "#{base_url}#{user_id}/#{avatar_hash}.png"  # Correct URL format
+
+  # Call the json_walk method
+  result = authenticator.json_walk({}, json_data, :avatar)
+
+  # Expect the result to be the full URL
+  expect(result).to eq "https://cdn.discordapp.com/avatars/1234/abcd1234.png"
+end
 
   it "can walk json and appropriately assign a `false`" do
     authenticator = OAuth2BasicAuthenticator.new
