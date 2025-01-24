@@ -305,11 +305,11 @@ describe OAuth2BasicAuthenticator do
 
   it "can walk json and download avatar" do
     authenticator = OAuth2BasicAuthenticator.new
-    json_string = '{"user":{"avatar":"http://example.com/1.png"}}'
+    json_string = '{"user":{"avatar":"https://cdn.discordapp.com/avatars/#{user.id}/1.png"}}'
     SiteSetting.oauth2_json_avatar_path = "user.avatar"
     result = authenticator.json_walk({}, JSON.parse(json_string), :avatar)
 
-    expect(result).to eq "http://example.com/1.png"
+    expect(result).to eq "https://cdn.discordapp.com/avatars/#{user.id}/1.png"
   end
 
   it "can walk json and appropriately assign a `false`" do
