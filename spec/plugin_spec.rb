@@ -188,7 +188,7 @@ describe OAuth2BasicAuthenticator do
           Base64.decode64(
             "R0lGODlhAQABALMAAAAAAIAAAACAAICAAAAAgIAAgACAgMDAwICAgP8AAAD/AP//AAAA//8A/wD//wBiZCH5BAEAAA8ALAAAAAABAAEAAAQC8EUAOw==",
           )
-        stub_request(:get, "http://avatar.example.com/avatar.png").to_return(
+        stub_request(:get, "http://avatar.example.com/id/avatar.png").to_return(
           body: png,
           headers: {
             "Content-Type" => "image/png",
@@ -196,16 +196,16 @@ describe OAuth2BasicAuthenticator do
         )
       end
 
-      it "enqueues a download_avatar_from_url job for existing user" do
+      it "enqueues a download__from_url job for existing user" do
         authenticator.expects(:fetch_user_details).returns(
           email: user.email,
-          avatar: "http://avatar.example.com/avatar.png",
+          avatar: "http://avatar.example.com/id/avatar.png",
         )
         expect { authenticator.after_authenticate(auth) }.to change { job_klass.jobs.count }.by(1)
 
         job_args = job_klass.jobs.last["args"].first
 
-        expect(job_args["url"]).to eq("http://avatar.example.com/avatar.png")
+        expect(job_args["url"]).to eq("http://avatar.example.com/id/avatar.png")
         expect(job_args["user_id"]).to eq(user.id)
         expect(job_args["override_gravatar"]).to eq(false)
       end
@@ -213,7 +213,7 @@ describe OAuth2BasicAuthenticator do
       it "enqueues a download_avatar_from_url job for new user" do
         authenticator.expects(:fetch_user_details).returns(
           email: "unknown@user.com",
-          avatar: "http://avatar.example.com/avatar.png",
+          avatar: "http://avatar.example.com/id/avatar.png",
         )
 
         auth_result = nil
@@ -227,7 +227,7 @@ describe OAuth2BasicAuthenticator do
 
         job_args = job_klass.jobs.last["args"].first
 
-        expect(job_args["url"]).to eq("http://avatar.example.com/avatar.png")
+        expect(job_args["url"]).to eq("http://avatar.example.com/id/avatar.png")
         expect(job_args["user_id"]).to eq(user.id)
         expect(job_args["override_gravatar"]).to eq(false)
       end
@@ -305,11 +305,11 @@ describe OAuth2BasicAuthenticator do
 
   it "can walk json and download avatar" do
     authenticator = OAuth2BasicAuthenticator.new
-    json_string = '{"user":{"avatar":"http://example.com/1.png"}}'
+    json_string = '{"user":{"avatar":"http://example.com/1/1.png"}}'
     SiteSetting.oauth2_json_avatar_path = "user.avatar"
     result = authenticator.json_walk({}, JSON.parse(json_string), :avatar)
 
-    expect(result).to eq "http://example.com/1.png"
+    expect(result).to eq "http://example.com/1/1.png"
   end
 
   it "can walk json and appropriately assign a `false`" do
